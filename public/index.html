@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerse</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <section class="nav-container">
+        <nav class="nav-section">
+            <div class="giftLogo">
+                <img src="./images/giftLogo.png" alt="gift logo">
+            </div>
+            <div class="menu-container">
+                <ul class="menu">
+                    <li><a href="./index.html">Home</a></li>
+                    <li class="cart-add-section" >Add to Product</li>
+                    <li><a href="./cart.html">Cart <span id="countQuantity">0</span></a></li>
+                </ul>
+            </div>
+        </nav>
+    </section>
+    <section class="banner-container">
+        <h2>Shop</h2>
+    </section>
+    <section class="cart-container-section">
+        <section id="cart-container">
+       <!-- cart container -->
+        </section>
+    </section>
+    <section class="add-section" style="display: none;">
+        <div class="add-Container">
+            <div class="close-addToCart">
+                <span>X</span>
+            </div>
+            <section class="inputFieldSection">
+                <div class="inputFieldContainer">
+                    <form onsubmit="handler(event)">
+                        <div class="itemTitle">
+                            <h2>Add Item</h2>
+                        </div>
+                        <hr>
+                        <div class="inputField">
+                            <div class="productNamePrice">
+                                <div class="productNameContainer">
+                                    <label for="productName">Product Name:</label>
+                                    <input type="text" name="productName" placeholder="Enter product name" required>
+                                </div>
+                                <div class="productPriceContainer">
+                                    <label for="productPrice">Price:</label>
+                                    <input type="number" name="productPrice" placeholder="Enter product price" required>
+                                </div>
+                            </div>
+                            <div class="fileUpload">
+                                <label for="productImage">Upload Image: </label>
+                                <input type="file" name="productImage" accept="image/*" required>
+                            </div>
+                        </div>
+                        <input class="submitButton" type="submit" value="Add Item">
+                    </form>
+                </div>
+            </section>
+        </div>
+    </section>
+<!-- chat section -->
+<section class="chatContainerSection">
+    <div class="chatContainer">
+        <div class="chatHover">
+            <div class="chatImg">
+                <img src="./images/chatImg/chat-svgrepo-com.svg" alt="Chat Image">
+            </div>
+            <div class="chatLive">
+                <h2>Live Chat</h2>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- char container -->
+<section class="customerChat" style="display: none;">
+    <section id="main">
+        <div class="headerChat">
+            <div class="log">Gift Shop</div> 
+            <div class="user">User Name</div>
+            <div class="group">group Name</div> <!-- Add group name display -->
+            <div class="CloseChat">x</div>
+        </div>
+        <div class="message-body" id="messageBody">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="message-form">
+            <div class="mainChat">
+                <div>
+                    <input type="text" name="txt-msg" placeholder="Type a message..." required> 
+                </div>
+                <div>
+                    <label for="imageInput">
+                        <img src="./images/chatImg/clip.svg" class="clip" alt="Attach file" />
+                    </label>
+                </div>
+                <div>
+                    <input type="file" name="fileShare" id="imageInput">
+                    <img src="./images/chatImg/send.svg" class="btn" alt="Send" onclick="sendClick()" /> 
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+    <script>
+        const handler = event => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch('http://localhost:5000/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                event.target.reset(); 
+                addCartItem(data.addedProduct); 
+                // if()
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        fetch('http://localhost:5000/upload')
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(NewCart => {
+                    addCartItem(NewCart); 
+                });
+            });
+        function addCartItem(product) {
+            const cartContainer = document.getElementById('cart-container');
+            const cartItem = document.createElement('div');
+            cartItem.className = 'cart-section';
+            cartItem.id = product._id; 
+            cartItem.innerHTML = `
+    <div class="cart-img">
+        <img src="./images/${product.ProductImage}" alt="${product.ProductName}">
+    </div>
+    <div class="cart-details">
+        <p class="cart-title">${product.ProductName}</p>
+        <p>$ <span class="cart-price">${product.ProductPrice}</span></p>
+    </div>
+    <button class="cart-button">Add to Cart</button>
+`;
+            cartContainer.appendChild(cartItem); 
+        }
+        $(document).ready(function () {
+            $('.cart-add-section').click(function () {
+                $('.add-section').show();
+            });
+            $('.close-addToCart').click(function () {
+                $('.add-section').hide();
+            });
+        });
+var cart = JSON.parse(localStorage.getItem('cart')) || {};
+$(document).ready(function () {
+    $(document).on('click', '.cart-button', function () {
+        const productId = $(this).closest('.cart-section').attr('id');
+        const productName = $(this).siblings('.cart-details').find('.cart-title').text();
+        const productPrice = parseFloat($(this).siblings('.cart-details').find('.cart-price').text());
+        const productImage = $(this).siblings('.cart-img').find('img').attr('src');
+        if (cart[productId]) {
+            cart[productId].count++;
+        } else {
+            cart[productId] = {
+                productId: productId,
+                productName: productName,
+                productImgurl: productImage,
+                price: productPrice,
+                count: 1
+            };
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+    });
+    function updateCartCount() {
+        const totalItems = Object.values(cart).reduce((total, item) => total + item.count, 0);
+        $('#countQuantity').text(totalItems);
+    }
+    updateCartCount();
+});
+$(document).ready(function() {
+            $('.chatHover').click(function() {              
+                $.getScript("/client.js")
+                    .done(function(script, textStatus) {
+                        console.log("Script loaded successfully: " + textStatus);
+                        $('.customerChat').show();
+                        $('.chatContainerSection').hide();
+                    })
+                    .fail(function(jqxhr, settings, exception) {
+                        console.error("Script load failed: " + exception);
+                    });                    
+            });
+            $('.CloseChat').click(function() {
+                $('.customerChat').hide();
+                $('.chatContainerSection').show();
+            });
+        });
+    </script>
+<script src="/socket.io/socket.io.js"></script>
+</body>
+</html>

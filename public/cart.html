@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerse</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <section class="nav-container">
+        <nav class="nav-section">
+            <div>
+                <h1>SHOP</h1>
+            </div>
+            <div class="menu-container">
+                <ul class="menu">
+                    <li><a href="./index.html">Home</a></li>                    
+                    <li><a href="./cart.html">Cart <span id="countQuantity">0</span></a></li>
+                </ul>
+            </div>
+        </nav>
+    </section>
+    <section class="banner-container">
+        <h2>Shop</h2>
+    </section>
+    <section class="cart-summary">
+        <table>
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="cartItems">
+            </tbody>
+        </table>
+       <div class="cart-summary-footer">
+      
+        <div>
+            <img style="height: 60px; margin-left: 30px;" src="./images/giftLogo.png" alt="">
+        </div>
+        <div></div>
+        <div></div>
+        <div style="display: flex; gap: 20px;">
+            <div class="totalPrice"> <h3 >Total Price : $<span id="price"></span></h3></div>
+            <div></div>
+            <div></div>
+            <div class="bipOrderBtn"><button class="add-purchase-button pleaceOrderBtn">Pleace Order</button></div>
+            <div></div>
+            <div></div>
+        </div>
+       </div>
+    </section>
+
+
+    <section class="order-modal" style="display: none;">
+        <div class="modal-center">
+            <div class="modal-container">
+                <div class="modal-close">
+                    <span>X</span>
+                </div>
+                <div class="modal-content">
+                    <h2 class="modal-title">Order Now</h2>
+                    <hr>
+                    <form onsubmit="handler(event)" class="order-form">
+                        <div class="form-group">
+                            <label for="userName">Name:</label>
+                            <input type="text" name="name" placeholder="Type Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="userEmail">Email:</label>
+                            <input type="email" name="email" placeholder="Type Your Email">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address:</label>
+                            <textarea name="address" placeholder="Type Your Address"></textarea>
+                        </div>
+                        <div class="paymentCard">
+                            <img src="./images/nogod.png" alt="nogod">
+                            <img src="./images/bkash.png" alt="bkash">
+                            <img src="./images/roket.png" alt="roket">
+                            <img src="./images/cash&d.png" alt="cash and delivary">
+                            <img src="./images/craditCard.png" alt="cradit card">
+                        </div>   
+                        <button type="submit" class="submit-btn">Proceed to Pay</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- payment section -->
+    <section class="payment-modal" id="paymentSucced" style="display: none;">
+        <div class="modal-center">
+            <div class="pay-modal-container">
+                <hr>
+                <h2 class="modal-title" id="order_s_f" style="text-align: center;"></h2>
+                <hr>
+            </div>
+        </div>
+    </section>
+
+
+    
+
+    <script>
+        const handler = event => {
+    event.preventDefault();
+   
+    console.log('Button clicked');
+    const formDataUser = new FormData(event.target);
+    console.log(formDataUser);
+    if (formDataUser.get('name') === '' || formDataUser.get('email') === '' || formDataUser.get('address') === '') {
+        document.getElementById('order_s_f').innerHTML = 'Name , Email, Address must be Required';
+            setTimeout(()=>{
+            $('#paymentSucced').hide();
+            }, 2000);
+            $('.order-modal').show();
+    }else{
+        const cartData = JSON.parse(localStorage.getItem('cart')) || {};
+    formDataUser.append('cart', JSON.stringify(cartData)); 
+    console.log(formDataUser);
+    fetch('http://localhost:5000/order', {
+        method: 'POST',
+        body: formDataUser
+    })
+    .then(res => res.json())
+    .then(order => {
+        console.log({order});
+        if(order.mongoDbResult.acknowledged){
+            // document.getElementById('order_s_f').innerHTML = 'samaul';
+            document.getElementById('order_s_f').innerHTML = 'Order Successfully';
+            setTimeout(()=>{
+            $('#paymentSucced').hide();
+            event.target.reset(); 
+        localStorage.clear();
+        window.location.reload();
+            }, 2000);
+        
+        }else{
+            document.getElementById('order_s_f').innerHTML = 'Order Faild'
+            setTimeout(()=>{
+            $('#paymentSucced').hide();
+            }, 1000);
+        }
+       
+    })
+    .catch(error => console.error('Error:', error));
+    }
+    
+};
+       $(document).ready(function () {
+    function updateCartDisplay() {
+        var carts = JSON.parse(localStorage.getItem('cart')) || {};
+        $('#cartItems').empty();
+        var totalPrice = 0;
+        var totalCount = 0;
+        
+
+        Object.values(carts).forEach(function (item) {
+            $('#cartItems').append(`
+                <tr data-product-id='${item.productId}'>
+                    <td><img src="${item.productImgurl}" alt="Product Image" class="cart-table-img"></td>
+                    <td>${item.productName}</td>
+                    <td>$${item.price}</td>
+                    <td>
+                        <button class="productDecrement" style="padding: 3px 5px;">-</button>
+                        <span>${item.count}</span>
+                        <button class="productIncrement" style="padding: 3px 5px;">+</button>
+                    </td>
+                    <td class='totalAmount'>$${(item.price * item.count).toFixed(2)}</td>
+                    <td><button class="deleteProduct" style="padding: 3px 5px;">Delete</button></td>
+                </tr>
+            `);
+            totalCount += item.count;
+            totalPrice += (item.price * item.count);
+        });
+
+        $('#price').text(totalPrice.toFixed(2));
+        $('#countQuantity').text(totalCount);
+    }
+
+    updateCartDisplay(); 
+
+    $(document).on('click', '.productIncrement', function () {
+        var productId = getProductId(this);
+        var newcarts = JSON.parse(localStorage.getItem('cart'));
+
+        if (newcarts[productId]) {
+            newcarts[productId].count++;
+            localStorage.setItem('cart', JSON.stringify(newcarts));
+            updateCartDisplay();
+        }
+    });
+
+    $(document).on('click', '.productDecrement', function () {
+        var productId = getProductId(this);
+        var allCart = JSON.parse(localStorage.getItem('cart'));
+
+        if (allCart[productId] && allCart[productId].count > 1) {
+            allCart[productId].count--;
+            localStorage.setItem('cart', JSON.stringify(allCart));
+            updateCartDisplay();
+        }
+    });
+
+    $(document).on('click', '.deleteProduct', function () {
+    var productId = getProductId(this);  
+    var allCart = JSON.parse(localStorage.getItem('cart')) || {}; 
+
+    if (allCart[productId]) {
+        var productCount = allCart[productId].count;  
+        delete allCart[productId];  
+        var count = parseInt(localStorage.getItem('countity')) || 0; 
+        count -= productCount; 
+
+        if (count < 0) {
+            count = 0;
+        }
+
+        localStorage.setItem('countity', count);            
+        $('#countCuantity').text(count); 
+
+        localStorage.setItem('cart', JSON.stringify(allCart));
+        updateCartDisplay(); 
+    }
+    $(this).closest('tr').remove();
+});
+
+
+    function getProductId(element) {
+        return $(element).closest('tr').attr('data-product-id');
+    };
+});
+
+$(document).ready(function () {
+    $('.pleaceOrderBtn').click(function () {
+        $('.order-modal').show();
+    });
+    $('.modal-close').click(function () {
+        $('.order-modal').hide();
+    });
+});
+$(document).ready(function () {
+    $('.submit-btn').click(function () {
+        $('.order-modal').hide();
+        $('.payment-modal').show();
+
+    });
+    $('.modal-close').click(function () {
+        $('.payment-modal').hide();
+    });
+});
+    </script>
+
+</body>
+</html>
