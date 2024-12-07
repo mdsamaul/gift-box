@@ -58,7 +58,7 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage });
-const uri = "mongodb+srv://mdsamaul843:G8SyFz8Bi1Z0OVwZ@giftshop.opz02.mongodb.net/?retryWrites=true&w=majority&appName=GiftShop";
+const uri = "mongodb+srv://mdsamaul843:J3R6z8LbdYQornqa@giftshop.opz02.mongodb.net/?retryWrites=true&w=majority&appName=GiftShop";
 
 const client = new MongoClient(uri, {
     serverApi: {
